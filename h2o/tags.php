@@ -100,8 +100,8 @@ class For_Tag extends H2o_Node {
     private $syntax = '{
         ([a-zA-Z][a-zA-Z0-9-_]*)(?:,\s?([a-zA-Z][a-zA-Z0-9-_]*))?
         \s+in\s+
-        ([a-zA-Z][a-zA-Z0-9-_]*(?:\.[a-zA-Z_0-9][a-zA-Z0-9_-]*)*)\s*   # Iteratable name
-        (?:limit\s*:\s*(\d+))?\s*
+        ([a-zA-Z0-9][a-zA-Z0-9-_,]*(?:\.[a-zA-Z_0-9][a-zA-Z0-9_-]*)*)\s*   # Iteratable name
+        (?:limit\s*:\s*-?(\d+))?\s*
         (reversed)?                                                     # Reverse keyword
     }x';
 
@@ -124,12 +124,16 @@ class For_Tag extends H2o_Node {
         if (!$this->item) {
             list($this->key, $this->item) = array($this->item, $this->key);
         }
-        $this->iteratable = symbol($this->iteratable);
+        if ( strpos($this->iteratable,',') > 0 ) {
+            $this->iteratable = explode(',',$this->iteratable);
+        } else $this->iteratable = symbol($this->iteratable);
         $this->reversed = (bool) $this->reversed;
     }
 
     function render($context, $stream) {
-        $iteratable = $context->resolve($this->iteratable);
+        if ( ! is_array($this->iteratable) ) {
+            $iteratable = $context->resolve($this->iteratable);
+        } else $iteratable = $this->iteratable;
 
         if ($this->reversed)
             $iteratable = array_reverse($iteratable);

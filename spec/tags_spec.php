@@ -18,6 +18,17 @@ class Describe_for_tag extends SimpleSpec {
         expects($result)->should_be('12345');    
     }
     
+
+    function should_iterate_over_a_list_of_objects() {
+       $result = h2o('{% for e in 1,2,3,4,5 %}{{ e }}{% endfor %}')->render();
+       expects($result)->should_be('12345');
+    }
+
+    function should_reverse_list_when_reversed_keyword_supplied() {
+       $result = h2o('{% for e in 1,2,3,4,5 reversed %}{{ e }}{% endfor %}')->render();
+       expects($result)->should_be('54321');
+    }
+
     function should_reverse_array_when_reversed_keyword_supplied() {
         $result = h2o('{% for e in items reversed %}{{ e }}{% endfor %}')->render(array(
             'items'=> array(1,2,3,4,5)

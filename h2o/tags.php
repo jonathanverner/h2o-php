@@ -280,6 +280,10 @@ class Include_Tag extends H2o_Node {
     private $nodelist;
     private $syntax = '/^["\'](.*?)["\'](\s+with\s+(.+))?$/';
     private $_additional_context = array();
+    private $dynamic = False;
+    private $fname_tpl;
+    private $tpl;
+    private $loader;
 
     function __construct($argstring, $parser, $position = 0) {
         if (!preg_match($this->syntax, $argstring, $matches)) {
@@ -298,11 +302,18 @@ class Include_Tag extends H2o_Node {
         }
 
         $this->filename = stripcslashes($matches[1]);
-        $this->nodelist = $parser->runtime->loadSubTemplate($this->filename, $parser->options);
-        $parser->storage['templates'] = array_merge(
-            $this->nodelist->parser->storage['templates'], $parser->storage['templates']
-        );
-        $parser->storage['templates'][] = $this->filename;
+        $this->fname_tpl = h2o::parseString($this->filename,$parser->options);
+        if ( $this->fname_tpl->render() != $this->filename ) {
+            $this->dynamic = True;
+            $this->loader = $parser->runtime;
+        } else {
+            $this->dynamic = False;
+            $this->nodelist = $parser->runtime->loadSubTemplate($this->filename, $parser->options);
+            $parser->storage['templates'] = array_merge(
+                $this->nodelist->parser->storage['templates'], $parser->storage['templates']
+            );
+            $parser->storage['templates'][] = $this->filename;
+        }
     }
 
     function render($context, $stream) {
@@ -316,7 +327,13 @@ class Include_Tag extends H2o_Node {
             $context[$key] = $value;
         }
 
-        $this->nodelist->render($context, $stream);
+        if ($this->dynamic) {
+            $fname = $this->fname_tpl->render($context);
+            $this->tpl = $this->loader->loadTemplate($fname);
+            $this->tpl->render($context,$stream);
+        } else {
+            $this->nodelist->render($context, $stream);
+        }
     }
 }
 

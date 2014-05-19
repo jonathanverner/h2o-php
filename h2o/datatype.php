@@ -142,11 +142,11 @@ class H2o_Info {
     function filters() {
         return array_keys(h2o::$filters);
     }
-    
+
     function tags() {
         return array_keys(h2o::$tags);
     }
-    
+
     function extensions() {
         return array_keys(h2o::$extensions);
     }

@@ -12,7 +12,7 @@ class Describe_comment_node extends SimpleSpec {
     function should_not_display_comments () {
         $person = 'taylor luk';
         expects(h2o('{* comment *}')->render())->should_be('');
-        
+
         $rs = h2o('{{ person }}{* print out person *}')->render(compact('person'));
         expects($rs)->should_be($person);
     }

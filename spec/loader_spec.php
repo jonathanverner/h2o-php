@@ -74,6 +74,14 @@ class Describe_file_loader extends SimpleSpec {
         expects($h2o->loader->cached)->should_be(false);
         $h2o->loader->flush_cache();
     }
+
+    function should_include_dynamic_filenames_in_include_tag() {
+        $opt = array('searchpath' => dirname(__FILE__).DS.'templates');
+
+        $h2o = h2o('dynamic_include.tpl',$opt);
+        expects($h2o->render())->should_match('/DYNAMIC TEMPLATE #1/');
+        expects($h2o->render())->should_match('/DYNAMIC TEMPLATE #2/');
+    }
 }
 
 class Describe_hash_loader extends SimpleSpec {

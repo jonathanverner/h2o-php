@@ -54,10 +54,10 @@ class H2o_File_Loader extends H2o_Loader {
 
 	function get_template_path($search_path, $filename){
 
-        
-        for ($i=0 ; $i < count($search_path) ; $i++) 
-        { 
-            
+
+        for ($i=0 ; $i < count($search_path) ; $i++)
+        {
+            $search_path[$i] = $search_path[$i].DS;
             if(file_exists($search_path[$i] . $filename)) {
                 $filename = $search_path[$i] . $filename;
                 return $filename;

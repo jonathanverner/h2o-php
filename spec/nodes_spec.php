@@ -31,5 +31,27 @@ class Describe_variable_node extends SimpleSpec {
         $result = h2o('{{ name|capitalize }}')->render(compact('name'));
         expects($result)->should_be('Taylor Luk');
     }
+
+    function should_correctly_parse_expressions() {
+        $pi = 3;
+        $result = h2o('{{ (pi+1)/2+10 }}')->render(compact('pi'));
+        expects($result)->should_be('12');
+
+        $except = false;
+        try {
+            $res = h2o('{{ ()pi+1)/2+10 }}')->render(compact('pi'));
+        } catch (Exception $e) {
+            $except = true;
+        }
+        expects($except)->should_be(true);
+
+        $except = false;
+        try {
+            $res = h2o('{{ +1 }}')->render(compact('pi'));
+        } catch (Exception $e) {
+            $except = true;
+        }
+        expects($except)->should_be(true);
+    }
 }
 ?>

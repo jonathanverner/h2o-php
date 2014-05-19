@@ -72,6 +72,10 @@ class If_Tag extends H2o_Node {
 
         $this->args = H2o_Parser::parseArguments($argstring);
 
+        // Remove the 'expression_end' token at the end
+        array_pop($this->args);
+
+
         $first = current($this->args);
         if (isset($first['operator']) && $first['operator'] === 'not') {
             array_shift($this->args);

@@ -73,9 +73,7 @@ class H2o_Parser {
                     break;
                 case 'variable' :
                     $args = H2o_Parser::parseArguments($token->content, $token->position);
-                    $variable = array_shift($args);
-                    $filters = $args;
-                    $node = new VariableNode($variable, $filters, $token->position);
+                    $node = new VariableNode($args, $token->position);
                     break;
                 case 'comment' :
                     $node = new CommentNode($token->content);
@@ -114,9 +112,14 @@ class H2o_Parser {
         $current_buffer = &$result;
         $filter_buffer = array();
         $tokens = $parser->parse();
+        $in_expression = true;
         foreach ($tokens as $token) {
             list($token, $data) = $token;
             if ($token == 'filter_start') {
+                if ( $in_expression ) {
+                    $in_expression = false;
+                    $current_buffer[] = 'expression_end';
+                }
                 $filter_buffer = array();
                 $current_buffer = &$filter_buffer;
             }
@@ -156,6 +159,10 @@ class H2o_Parser {
             elseif( $token == 'parentheses' ) {
                 $current_buffer[] = array('parentheses'=>$data);
             }
+        }
+        if ( $in_expression ) {
+            $in_expression = false;
+            $current_buffer[] = 'expression_end';
         }
         return $result;
     }

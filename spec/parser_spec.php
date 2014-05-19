@@ -58,20 +58,21 @@ class Describe_Argument_Lexer extends SimpleSpec {
     function should_parse_named_arguments() {
         $result = $this->parse("something | filter 11, name: 'something', age: 18, var: variable, active: true");
         $expected = array(
-            array(
-                ':something', 'filters' => array( 
-	                array(':filter', 11, array('name' => "'something'", 'age' => 18, 'var' => ':variable', 'active'=>'true'))
+                ':something',
+                array( 'expression_end',
+                       'filters' => array(
+	                  array(':filter', 11, array('name' => "'something'", 'age' => 18, 'var' => ':variable', 'active'=>'true'))
+                        )
                 )
-            )
         );
         expects($result)->should_be($expected);
     }
     
     function should_parse_variable_contains_operators() {
-        expects($this->parse("org"))->should_be(array(':org'));
-        expects($this->parse("dand"))->should_be(array(':dand'));
-        expects($this->parse("xor"))->should_be(array(':xor'));
-        expects($this->parse("notd"))->should_be(array(':notd'));
+        expects($this->parse("org"))->should_be(array(':org','expression_end'));
+        expects($this->parse("dand"))->should_be(array(':dand','expression_end'));
+        expects($this->parse("xor"))->should_be(array(':xor','expression_end'));
+        expects($this->parse("notd"))->should_be(array(':notd','expression_end'));
     }
     
     private function parse($string) {

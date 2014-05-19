@@ -46,19 +46,23 @@ class NodeList extends H2o_Node implements IteratorAggregate  {
 }
 
 class VariableNode extends H2o_Node {
-    private $filters = array();
-    var $variable;
-    
-	function __construct($variable, $filters, $position = 0) {
-        if (!empty($filters))
-            $this->filters = $filters;
-		$this->variable = $variable;
+    private $filters = array(), $expression = array();
+
+	function __construct($variable, $position = 0) {
+            $vlen = count($variable);
+            for($i=0;(! is_array($variable[$i]) || ! isset($variable[$i][0]) || $variable[$i][0] !== 'expression_end') &&
+                     ($variable[$i] !== 'expression_end') &&
+                     ($i<$vlen);$i++) {
+              $this->expression[] = $variable[$i];
+            }
+            $this->filters = (is_array($variable[$i]) && isset($variable[$i]['filters']) ) ? $variable[$i]['filters'] : array();
 	}
 
 	function render($context, $stream) {
-        $value = $context->resolve($this->variable);
-        $value = $context->escape($value, $this->variable);
-        $stream->write($value);
+            $exp_value = Evaluator::eval_expression($this->expression,$context);
+            $value = $context->applyFilters($exp_value, $this->filters);
+            $value = $context->escape($value, array('filters'=>$this->filters));
+            $stream->write($value);
 	}
 }
 

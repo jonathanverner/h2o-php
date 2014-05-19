@@ -50,7 +50,7 @@ class SimpleSpec extends UnitTestCase {
         parent::__construct($label);
     }
 
-    function _isTest($method) {
+    function isTest($method) {
         if (strtolower(substr($method, 0, 2)) == 'it' || strtolower(substr($method, 0, 6)) == 'should') {
             return ! SimpleTestCompatibility::isA($this, strtolower($method));
         }
@@ -115,9 +115,9 @@ class SimpleSpec extends UnitTestCase {
             $result = !$result;
         }
         if ($result) {
-            return $this->pass(sprintf($message,$expectation->overlayMessage($compare, $this->_reporter->getDumper())));
+            return $this->pass(sprintf($message,$expectation->overlayMessage($compare, $this->reporter->getDumper())));
         } else {
-            return $this->fail(sprintf($message,$expectation->overlayMessage($compare, $this->_reporter->getDumper())));
+            return $this->fail(sprintf($message,$expectation->overlayMessage($compare, $this->reporter->getDumper())));
         }
     }
     

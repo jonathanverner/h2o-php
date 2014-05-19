@@ -7,6 +7,11 @@ class Describe_if_tag extends SimpleSpec {
         $results = h2o('{% if 4 > 3 %}yes{% endif %}')->render();
         expects($results)->should_be('yes');
     }
+
+    function should_evaluate_complex_boolean_expression() {
+        $results = h2o('{% if  (4+7) > 5 and 7 == (2+1)*2+1 %}yes{% endif %}')->render();
+        expects($results)->should_be('yes');
+    }
 }
 
 

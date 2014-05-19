@@ -29,9 +29,70 @@ class Evaluator {
     static function eq($l, $r) { return $l == $r; }
     static function ne($l, $r) { return $l != $r; }
 
+    static function plus($l, $r) { return $l + $r; }
+    static function minus($l,$r) { return $l - $r; }
+    static function mul($l, $r)  { return $l * $r; }
+    static function div($l, $r)  { return $l / $r; }
+    static function mod($l, $r)  { return $l % $r; }
+
     static function not_($bool) { return !$bool; }
-    static function and_($l, $r) { return ($l && $r); }
-    static function or_($l, $r) { return ($l && $r); }
+    static function and_($l, $r) { return ($l and $r); }
+    static function or_($l, $r) { return ($l or $r); }
+
+    static $op_precedence;
+
+    static function higher_op_on_stack( $op, $stack ) {
+        if ( count($stack) < 1 ) return false;
+        else return Evaluator::$op_precedence[end($stack)] > Evaluator::$op_precedence[$op];
+    }
+
+    static function eval_op_stack( &$op_stack, &$number_stack, &$pos ) {
+        $op = array_pop($op_stack);
+        if ( $op == 'not' ) {
+            $l = array_pop($number_stack);
+            if ( is_null($l) ) throw new Exception("Not enough arguments to $op at $pos");
+            $pos = $pos-2;
+            return ! $l;
+        } else {
+            $r = array_pop($number_stack);
+            $l = array_pop($number_stack);
+            if ( is_null($r) or is_null($l) ) throw new Exception("Not enough arguments to $op at $pos");
+            $pos = $pos-3;
+            return call_user_func(array("Evaluator", $op), $l, $r);
+        }
+    }
+
+    static function eval_expression( $args, $context ) {
+        $op_stack = array();
+        $num_stack = array();
+        $expression_pos = 0; // Tracks position in the expression for better error reporting.
+        $back_track_pos = 0; // Tracks position in the expression when backtracking for better error reporting.
+        foreach( $args as $arg ) {
+            $expression_pos++;
+            if ( (is_array($arg) && isset($arg['operator'])) ) {
+                $back_track_pos = $expression_pos;
+                while ( Evaluator::higher_op_on_stack( $arg['operator'], $op_stack ) ) {
+                    $val = Evaluator::eval_op_stack( $op_stack, $num_stack, $back_track_pos );
+                    $num_stack[] = $val;
+                }
+                $op_stack[] = $arg['operator'];
+            } else if ( (is_array($arg) && isset($arg['parentheses'])) ) {
+                if ( $arg['parentheses'] === '(' ) $op_stack[] = '(';
+                else {
+                    $back_track_pos = $expression_pos;
+                    while( $op = array_pop( $op_stack ) ) {
+                        if ( $op === '(' ) break;
+                        $op_stack[] = $op;
+                        $num_stack[] = Evaluator::eval_op_stack( $op_stack, $num_stack, $back_track_pos );
+                    }
+                    if ( is_null($op) ) throw new Exception("No opening paren for ')' at {$expression_pos}");
+                }
+            } else $num_stack[] = $context->resolve($arg);
+        }
+        $back_track_pos = $expression_pos;
+        while ( count( $op_stack ) > 0 ) $num_stack[] = Evaluator::eval_op_stack( $op_stack, $num_stack, $back_track_pos );
+        return array_pop($num_stack);
+    }
 
     # Currently only support single expression with no preceddence ,no boolean expression
     #    [expression] =  [optional binary] ? operant [ optional compare operant]
@@ -39,27 +100,18 @@ class Evaluator {
     #    [compare] = > | < | == | >= | <=
     #    [binary]    = not | !
     static function exec($args, $context) {
-        $argc = count($args);
-        $first = array_shift($args);
-        $first = $context->resolve($first);
-        switch ($argc) {
-            case 1 :
-                return $first;
-            case 2 :
-                if (is_array($first) && isset($first['operator']) && $first['operator'] == 'not') {
-                    $operant = array_shift($args);
-                    $operant = $context->resolve($operant);
-                    return !($operant);
-                }
-            case 3 :
-                list($op, $right) = $args;
-                $right = $context->resolve($right);
-                return call_user_func(array("Evaluator", $op['operator']), $first, $right);
-            default:
-                return false;
-        }
+        return Evaluator::eval_expression( $args, $context );
     }
 }
+
+Evaluator::$op_precedence = array(
+            '('   => -1,
+            'not' => 0, 'or_'=>0, 'and_'=>0,
+            'eq'  => 1, 'gt' => 1, 'lt' => 1, 'ge' => 1, 'le' => 1,
+            'mod' => 2,
+            'plus'  => 3, 'minus' => 3,
+            'mul'  => 4, 'div' => 4
+);
 
 /**
  * $type of token, Block | Variable

@@ -64,8 +64,6 @@ class If_Tag extends H2o_Node {
     private $negate;
 
     function __construct($argstring, $parser, $position = 0) {
-        if (preg_match('/\s(and|or)\s/', $argstring))
-            throw new TemplateSyntaxError('H2o doesn\'t support multiple expressions');
 
         $this->body = $parser->parse('endif', 'else');
 

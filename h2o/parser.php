@@ -153,6 +153,9 @@ class H2o_Parser {
             elseif( $token == 'operator') {
                 $current_buffer[] = array('operator'=>$data);
             }
+            elseif( $token == 'parentheses' ) {
+                $current_buffer[] = array('parentheses'=>$data);
+            }
         }
         return $result;
     }
@@ -170,7 +173,7 @@ class H2O_RE {
         self::$boolean    = '/true|false/';
         self::$seperator    = '/,/';
         self::$pipe         = '/\|/';
-        self::$operator     = '/\s?(>|<|>=|<=|!=|==|!|and |not |or )\s?/i';
+        self::$operator     = '/\s?(>|<|>=|<=|!=|==|!|\+|-|\*|\/|and |not |or |mod )\s?/i';
         self::$number       = '/\d+(\.\d*)?/';
         self::$name         = '/[a-zA-Z][a-zA-Z0-9-_]*(?:\.[a-zA-Z_0-9][a-zA-Z0-9_-]*)*/';
 
@@ -194,7 +197,8 @@ class ArgumentLexer {
     private $match;
     private $pos = 0, $fpos, $eos;
     private $operator_map = array(
-        '!' => 'not', '!='=> 'ne', '==' => 'eq', '>' => 'gt', '<' => 'lt', '<=' => 'le', '>=' => 'ge'
+        '!' => 'not', '!='=> 'ne', '==' => 'eq', '>' => 'gt', '<' => 'lt', '<=' => 'le', '>=' => 'ge',
+        '*' => 'mul', '/' => 'div', '+' => 'plus', '-' => 'minus', 'or' => 'or_', 'and'=>'and_',
     );
 
     function __construct($source, $fpos = 0){
@@ -214,6 +218,9 @@ class ArgumentLexer {
                     if(isset($this->operator_map[$operator]))
                         $operator = $this->operator_map[$operator];
                     $result[] = array('operator', $operator);
+                }
+                elseif ($this->scan(H2O_RE::$parentheses)) {
+                    $result[] = array('parentheses',$this->match);
                 }
                 elseif ($this->scan(H2O_RE::$boolean))
                     $result[] = array('boolean', $this->match);
